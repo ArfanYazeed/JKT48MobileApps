@@ -1,5 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:html' as html;
+import 'dart:ui_web' as ui;
+import 'events-page.dart';
+import 'profile/profile.dart';
+import 'jadwal/jadwal.dart';
+import '../member/member.dart';
+import 'news.dart';
+import 'theater/theater.dart';
+import 'package:jkt48/profile/profile.dart';
 
 void main() {
   runApp(const MyApp());
@@ -18,54 +28,91 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFFF5F6FA),
         useMaterial3: true,
       ),
-      home: const HomePage(),
+      home: const MainPage(),
     );
   }
 }
 
-// ================= HOME PAGE =================
+// ================= MAIN PAGE (NAVIGATION CONTROLLER) =================
+class MainPage extends StatefulWidget {
+  const MainPage({super.key});
+
+  @override
+  State<MainPage> createState() => _MainPageState();
+}
+
+class _MainPageState extends State<MainPage> {
+  int _selectedIndex = 0;
+
+  // Semua halaman
+  final List<Widget> _pages = const [
+    HomePage(),
+    EventPage(),
+    ProfilePage(), // sekarang tidak error lagi
+  ];
+
+  void _onTap(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: const CustomAppBar(),
+      body: _pages[_selectedIndex], // halaman berubah di sini
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        selectedItemColor: const Color(0xFFD50000),
+        unselectedItemColor: Colors.grey,
+        onTap: _onTap,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_rounded),
+            label: "Home",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.event_rounded),
+            label: "Events",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_rounded),
+            label: "Profile",
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ================= HOME PAGE (TANPA SCAFFOLD!) =================
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // INI AKAN SELALU DI ATAS (TIDAK PERNAH IKUT SCROLL)
-      appBar: const CustomAppBar(),
-
-      // YANG SCROLL HANYA KONTEN DI BAWAHNYA
-      body: ListView(
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.zero,
-        children: const [
-          SizedBox(height: 8),
-
-          // Banner
-          BannerSlider(),
-
-          SizedBox(height: 24),
-
-          // Main Menu
-          SectionTitle(title: "Main Menu"),
-          MenuGrid(),
-
-          SizedBox(height: 24),
-
-          // News
-          SectionTitle(title: "Latest News"),
-          NewsSection(),
-
-          SizedBox(height: 30),
-        ],
-      ),
-
-      // Bottom nav juga tetap (tidak ikut scroll)
-      bottomNavigationBar: const CustomBottomNav(),
+    return ListView(
+      physics: const BouncingScrollPhysics(),
+      padding: EdgeInsets.zero,
+      children: [
+        SizedBox(height: 8),
+        BannerSlider(),
+        SizedBox(height: 24),
+        MenuGrid(),
+        SizedBox(height: 24),
+        NewsSection(),
+        SizedBox(height: 30),
+        TheaterMenuSection(),
+        SizedBox(height: 30),
+        VideoSection(),
+        SizedBox(height: 30),
+      ],
     );
   }
 }
 
-// ================= PREMIUM APP BAR =================
+// ================= APP BAR =================
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   const CustomAppBar({super.key});
 
@@ -73,31 +120,13 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return AppBar(
       elevation: 4,
-      shadowColor: Colors.black.withOpacity(0.2),
-      flexibleSpace: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFD50000), Color(0xFFFF5252)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-      ),
-      title: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Icon(Icons.star, color: Colors.white, size: 22),
-          SizedBox(width: 8),
-          Text(
-            "JKT48 Official",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1,
-            ),
-          ),
-        ],
-      ),
+      shadowColor: const Color.fromARGB(255, 14, 11, 11).withOpacity(0.2),
+      backgroundColor: const Color(0xFFD50000),
       centerTitle: true,
+      title: const Text(
+        "JKT48 Official",
+        style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
+      ),
       actions: const [
         Padding(
           padding: EdgeInsets.only(right: 16),
@@ -111,7 +140,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   Size get preferredSize => const Size.fromHeight(60);
 }
 
-// ================= AUTO BANNER SLIDER (UPGRADED) =================
+// ================= BANNER SLIDER =================
 class BannerSlider extends StatefulWidget {
   const BannerSlider({super.key});
 
@@ -125,9 +154,11 @@ class _BannerSliderState extends State<BannerSlider> {
   Timer? timer;
 
   final List<String> banners = [
-    "https://via.placeholder.com/800x400/FF1744/FFFFFF?text=JKT48+Concert",
-    "https://via.placeholder.com/800x400/7C4DFF/FFFFFF?text=JKT48+Event",
-    "https://via.placeholder.com/800x400/2196F3/FFFFFF?text=JKT48+Theater",
+    "asset/image/5.jpg",
+    "asset/image/6.jpg",
+    "asset/image/7.jpg",
+    "asset/image/8.jpg",
+    "asset/image/9.jpg",
   ];
 
   @override
@@ -160,6 +191,7 @@ class _BannerSliderState extends State<BannerSlider> {
           height: 190,
           child: PageView.builder(
             controller: _controller,
+            physics: const PageScrollPhysics(),
             itemCount: banners.length,
             onPageChanged: (index) {
               setState(() => currentIndex = index);
@@ -171,36 +203,7 @@ class _BannerSliderState extends State<BannerSlider> {
                   borderRadius: BorderRadius.circular(20),
                   child: Stack(
                     fit: StackFit.expand,
-                    children: [
-                      Image.network(
-                        banners[index],
-                        fit: BoxFit.cover,
-                      ),
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.black.withOpacity(0.1),
-                              Colors.black.withOpacity(0.5),
-                            ],
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                          ),
-                        ),
-                      ),
-                      const Positioned(
-                        left: 16,
-                        bottom: 16,
-                        child: Text(
-                          "Official Event",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
+                    children: [Image.asset(banners[index], fit: BoxFit.cover)],
                   ),
                 ),
               );
@@ -240,17 +243,13 @@ class SectionTitle extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 18),
       child: Text(
         title,
-        style: const TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 0.5,
-        ),
+        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
       ),
     );
   }
 }
 
-// ================= PREMIUM MENU GRID =================
+// ================= MENU GRID =================
 class MenuGrid extends StatelessWidget {
   const MenuGrid({super.key});
 
@@ -281,7 +280,43 @@ class MenuGrid extends StatelessWidget {
           final menu = menus[index];
           return InkWell(
             borderRadius: BorderRadius.circular(22),
-            onTap: () {},
+            onTap: () {
+              switch (menu["title"]) {
+                case "News":
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const NewsPage()),
+                  );
+                  break;
+
+                case "Schedule":
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const JadwalPage()),
+                  );
+                  break;
+
+                case "Members":
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const MemberPage()),
+                  );
+                  break;
+
+                case "Theater":
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const TheaterPage(),
+                    ),
+                  );
+                  break;
+
+                case "Fans":
+                  // nanti halaman members
+                  break;
+              }
+            },
             child: Ink(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(22),
@@ -316,81 +351,397 @@ class MenuGrid extends StatelessWidget {
   }
 }
 
-// ================= NEWS SECTION =================
+// ================= NEWS SECTION FINAL =================
 class NewsSection extends StatelessWidget {
-  const NewsSection({super.key});
+  NewsSection({super.key});
+
+  final List<News> newsList = [
+    News(
+      category: "EVENT",
+      date: "23 Februari 2026",
+      title:
+          "Pengumuman Mengenai JKT48 OFC Event “JKT48 Psychology Project: Discovering Our Love, Dream and Passion”",
+      detail: "Detail lengkap event Psychology Project JKT48...",
+      imageUrl: "",
+    ),
+    News(
+      category: "THEATER",
+      date: "20 Februari 2026",
+      title: "Pengumuman Mengenai Ramadhan Charity Donation 2026",
+      detail: "Detail charity donation...",
+      imageUrl: "",
+    ),
+    News(
+      category: "OTHER",
+      date: "17 Februari 2026",
+      title: "Pengumuman Mengenai Aktivitas Gendis Mayrannisa di JKT48",
+      detail: "Detail aktivitas Gendis...",
+      imageUrl: "",
+    ),
+    News(
+      category: "THEATER",
+      date: "16 Februari 2026",
+      title:
+          "Pengumuman Mengenai Aktivitas JKT48 Theater Selama Bulan Ramadan 2026",
+      detail: "Detail aktivitas theater Ramadan...",
+      imageUrl: "",
+    ),
+  ];
+
+  Color getCategoryColor(String category) {
+    switch (category) {
+      case "EVENT":
+        return const Color(0xFF2F5D8C);
+      case "THEATER":
+        return const Color(0xFF8E44AD);
+      case "OTHER":
+        return Colors.black;
+      default:
+        return Colors.grey;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: List.generate(
-        4,
-        (index) => Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 12,
-                ),
-              ],
-            ),
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(12),
-              leading: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  "https://via.placeholder.com/100x100/FF1744/FFFFFF?text=JKT48",
-                  width: 65,
-                  height: 65,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              title: const Text(
-                "JKT48 New Event Announcement",
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: const Text(
-                "Check the latest concert, theater schedule, and official events.",
-              ),
-              trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+    return Container(
+      width: double.infinity,
+      color: const Color(0xFFF2F2F2),
+      padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          /// TITLE
+          const Text(
+            "NEWS",
+            style: TextStyle(
+              color: Colors.red,
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 3,
             ),
           ),
-        ),
+
+          const SizedBox(height: 30),
+
+          /// NEWS LIST
+          Column(
+            children: newsList.map((news) {
+              final color = getCategoryColor(news.category);
+
+              return InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => NewsPage(initialNews: news),
+                    ),
+                  );
+                },
+                child: Column(
+                  children: [
+                    /// CATEGORY + DATE
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: color,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            news.category,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(width: 12),
+
+                        Text(
+                          news.date,
+                          style: const TextStyle(
+                            color: Colors.black54,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    /// TITLE
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        news.title,
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    /// RED LINE
+                    Container(
+                      height: 1,
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: Colors.red, width: 1),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 18),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+
+          const SizedBox(height: 10),
+
+          /// CHECK ALL BUTTON
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: Colors.red, width: 1.5),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NewsPage()),
+              );
+            },
+            child: const Text(
+              "Check All >",
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-// ================= MODERN BOTTOM NAV =================
-class CustomBottomNav extends StatelessWidget {
-  const CustomBottomNav({super.key});
+class TheaterMenuSection extends StatelessWidget {
+  const TheaterMenuSection({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      selectedItemColor: Colors.red,
-      unselectedItemColor: Colors.grey,
-      showUnselectedLabels: true,
-      elevation: 10,
-      type: BottomNavigationBarType.fixed,
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home_rounded),
-          label: "Home",
+    return SizedBox(
+      height: 400,
+      width: double.infinity,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          //  BACKGROUND IMAGE
+          Positioned.fill(
+            child: Image.asset("asset/image/2.jpg", fit: BoxFit.cover),
+          ),
+
+          // DARK OVERLAY (biar teks lebih jelas)
+          Positioned.fill(
+            child: Container(color: Colors.black.withOpacity(0.35)),
+          ),
+
+          // TOMBOL DI TENGAH
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(50),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const TheaterPage()),
+                );
+              },
+              child: Container(
+                height: 65,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(50),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: const Text(
+                  "Apa Itu Theater JKT48 >",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class VideoSection extends StatefulWidget {
+  const VideoSection({super.key});
+
+  @override
+  State<VideoSection> createState() => _VideoSectionState();
+}
+
+class _VideoSectionState extends State<VideoSection> {
+  final PageController _pageController = PageController(viewportFraction: 0.85);
+
+  int currentIndex = 0;
+
+  final List<String> videos = [
+    "axdKwZcayuA",
+    "HTTOAl8mMjE",
+    "aOgTX9-crmg",
+    "rzpltLtgMe4",
+    "zCcCtvbYf1M",
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const Text(
+          "VIDEO",
+          style: TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.bold,
+            color: Colors.red,
+            letterSpacing: 2,
+          ),
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.event_rounded),
-          label: "Events",
+        const SizedBox(height: 20),
+
+        // 🎬 CAROUSEL VIDEO (SWIPE MANUAL)
+        SizedBox(
+          height: 210,
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: videos.length,
+            physics: const BouncingScrollPhysics(), // bisa swipe manual
+            onPageChanged: (index) {
+              setState(() => currentIndex = index);
+            },
+            itemBuilder: (context, index) {
+              return AnimatedPadding(
+                duration: const Duration(milliseconds: 300),
+                padding: EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: currentIndex == index ? 0 : 10,
+                ),
+                child: YoutubeCard(videoId: videos[index]),
+              );
+            },
+          ),
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person_rounded),
-          label: "Profile",
+
+        const SizedBox(height: 14),
+
+        // 🔴 DOT INDICATOR (BISA DIKLIK)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            videos.length,
+            (index) => GestureDetector(
+              onTap: () {
+                // pindah page saat dot dipencet
+                _pageController.animateToPage(
+                  index,
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeInOut,
+                );
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                margin: const EdgeInsets.symmetric(horizontal: 5),
+                width: currentIndex == index ? 20 : 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: currentIndex == index ? Colors.red : Colors.grey[400],
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ),
+          ),
         ),
       ],
     );
+  }
+}
+
+class YoutubeCard extends StatelessWidget {
+  final String videoId;
+  const YoutubeCard({super.key, required this.videoId});
+
+  @override
+  Widget build(BuildContext context) {
+    final String viewType = 'youtube-$videoId';
+
+    if (kIsWeb) {
+      // Register iframe YouTube (WEB ONLY)
+      ui.platformViewRegistry.registerViewFactory(viewType, (int viewId) {
+        final iframe = html.IFrameElement()
+          ..src = "https://www.youtube.com/embed/$videoId"
+          ..style.border = '0'
+          ..allow =
+              'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
+          ..allowFullscreen = true
+          ..style.width = '100%'
+          ..style.height = '100%';
+
+        return iframe;
+      });
+
+      return Container(
+        width: 320,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+          child: HtmlElementView(viewType: viewType),
+        ),
+      );
+    } else {
+      // Fallback Android/iOS
+      return Container(
+        width: 320,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.black12,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: const Text("YouTube hanya aktif di Web"),
+      );
+    }
   }
 }
