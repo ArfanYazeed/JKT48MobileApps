@@ -3,10 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:html' as html;
 import 'dart:ui_web' as ui;
-import 'events-page.dart';
 import 'profile/profile.dart';
 import 'jadwal/jadwal.dart';
 import '../member/member.dart';
+import 'shop-page.dart';
+import 'fans.dart';
 import 'news.dart';
 import 'theater/theater.dart';
 import 'package:jkt48/profile/profile.dart';
@@ -47,7 +48,6 @@ class _MainPageState extends State<MainPage> {
   // Semua halaman
   final List<Widget> _pages = const [
     HomePage(),
-    EventPage(),
     ProfilePage(), // sekarang tidak error lagi
   ];
 
@@ -71,10 +71,6 @@ class _MainPageState extends State<MainPage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.home_rounded),
             label: "Home",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.event_rounded),
-            label: "Events",
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_rounded),
@@ -312,8 +308,22 @@ class MenuGrid extends StatelessWidget {
                   );
                   break;
 
-                case "Fans":
-                  // nanti halaman members
+                case "Shop":
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ShopPage()
+                    ),
+                  );
+                  break;
+
+                case "Fans Official":
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const FansPage()
+                    ),
+                  );
                   break;
               }
             },
